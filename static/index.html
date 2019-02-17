@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>学习日记</title>
+    <link rel="stylesheet" href="element_ui.css">
+    <script src="./vue.js"></script>
+    <script src="./fly.min.js"></script>
+    <script src="./element_ui.js"></script>
+    <style>
+        .label {
+            width: 50px;
+            float: left;
+            line-height: 28px;
+            text-align: center;
+        }
+
+        .box {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="root">
+    <el-button @click="showAddDialog = true">添加</el-button>
+    <el-dialog
+            title="提示"
+            :visible.sync="showAddDialog"
+            width="30%"
+    >
+        <div class="box" style="overflow: hidden">
+            <span class="label">事件:</span>
+            <el-input v-model="addData.sth" style="float: left;width: 150px;margin-left: 10px;"
+                      size="mini"></el-input>
+        </div>
+        <div class="box" style="overflow: hidden">
+            <span class="label">标签:</span>
+            <el-input v-model="addData.tags" style="float: left;width: 150px;margin-left: 10px;"
+                      size="mini"></el-input>
+        </div>
+        <div class="box" style="overflow: hidden">
+            <span class="label">标注:</span>
+            <el-input v-model="addData.remark" style="float: left;width: 150px;margin-left: 10px;"
+                      size="mini"></el-input>
+        </div>
+
+
+        <span slot="footer" class="dialog-footer">
+            <el-button @click="showAddDialog = false">取 消</el-button>
+            <el-button type="primary" @click="add">确 定</el-button>
+        </span>
+    </el-dialog>
+
+    <el-table
+            :data="tableData"
+            border
+            style="width: 100%">
+        <el-table-column
+                prop="id"
+                label="主键"
+                width="80">
+        </el-table-column>
+        <!--------------------------------------------->
+        <el-table-column
+                prop="sth"
+                label="事件"
+                width="180">
+            <template slot-scope="scope">
+                <el-input v-model="scope.row.sth" placeholder="请输入内容"></el-input>
+            </template>
+        </el-table-column>
+        <!--------------------------------------------->
+        <el-table-column
+                prop="tags"
+                label="标签"
+                width="180">
+            <template slot-scope="scope">
+                <el-input v-model="scope.row.tags" placeholder="请输入内容"></el-input>
+            </template>
+        </el-table-column>
+        <!--------------------------------------------->
+        <el-table-column
+                prop="remark"
+                label="标注"
+                width="180">
+            <template slot-scope="scope">
+                <el-input v-model="scope.row.remark" placeholder="请输入内容"></el-input>
+            </template>
+        </el-table-column>
+        <!--------------------------------------------->
+        <el-table-column
+                prop="addTime"
+                label="时间"
+                width="180">
+        </el-table-column>
+        <!--------------------------------------------->
+
+
+        <el-table-column
+                label="操作"
+                width="180">
+            <template slot-scope="scope">
+                <el-button type="primary" @click="update(scope.row)">修改</el-button>
+                <el-button type="danger" @click="deleteDiary(scope.row.id)">删除</el-button>
+            </template>
+        </el-table-column>
+
+    </el-table>
+</div>
+
+<script>
+
+    new Vue({
+        el: "#root",
+        data() {
+            return {
+                msg: "hello vue",
+                tableData: [],
+                base_url: "http://localhost:8888",
+                showAddDialog: false,
+                addData: {
+                    sth: '',
+                    tags: '',
+                    remark: '',
+                }
+            }
+        },
+        methods: {
+            getData() {
+                fly.get(this.base_url + '/queryDiary').then(res => {
+                    console.log(res)
+                    var res = res.data
+                    if (res.code == 200) {
+                        this.tableData = res.data
+
+                    } else {
+                        this.$message({
+                            showClose: true,
+                            message: res.msg,
+                            type: 'error'
+                        });
+                    }
+                })
+            },
+            //--------------------------------------------------------------
+            update(row) {
+                console.log(row)
+                fly.post(this.base_url + '/updateDiary', row).then(res => {
+                    var res = res.data
+                    if (res.code == 200) {
+                        this.$message({
+                            showClose: true,
+                            message: res.msg,
+                            type: 'success'
+                        });
+                    } else {
+                        this.$message({
+                            showClose: true,
+                            message: res.msg,
+                            type: 'error'
+                        });
+                    }
+                })
+            },
+            // ---------------------------------------------------------------------------
+            deleteDiary(id) {
+                console.log(id)
+                this.$confirm('此操作将永久删除该文件, 是否继续?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    fly.post(this.base_url + '/delDiary', {id}).then(res => {
+                        var res = res.data
+                        if (res.code == 200) {
+                            this.$message({
+                                showClose: true,
+                                message: res.msg,
+                                type: 'success'
+                            });
+                            this.getData()
+                        } else {
+                            this.$message({
+                                showClose: true,
+                                message: res.msg,
+                                type: 'error'
+                            });
+                        }
+                    })
+
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消删除'
+                    });
+                });
+
+
+            },
+
+            // ----------------------------------------------------------------------------------
+            add() {
+                console.log(this.addData)
+                fly.post(this.base_url + '/addDiary', this.addData).then(res => {
+                    var res = res.data
+                    if (res.code == 200) {
+                        this.showAddDialog = false
+                        this.$message({
+                            showClose: true,
+                            message: res.msg,
+                            type: 'success'
+                        })
+                        this.getData()
+                    } else {
+                        this.$message({
+                            showClose: true,
+                            message: res.msg,
+                            type: 'error'
+                        });
+                    }
+                })
+            }
+        },
+        mounted() {
+            this.getData()
+        }
+    })
+</script>
+</body>
+</html>
