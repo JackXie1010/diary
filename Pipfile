@@ -7,10 +7,8 @@ verify_ssl = true
 
 [packages]
 tornado = "*"
-pymysql = "*"
 peewee = "*"
 peewee-async = "*"
-aiomysql = "*"
 aiopg = "*"
 pyjwt = "*"
 
